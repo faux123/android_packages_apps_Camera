@@ -31,6 +31,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -89,7 +90,7 @@ public class VideoCamera extends BaseCamera
         implements View.OnClickListener,
         ShutterButton.OnShutterButtonListener, SurfaceHolder.Callback,
         MediaRecorder.OnErrorListener, MediaRecorder.OnInfoListener,
-        Switcher.OnSwitchListener, PreviewFrameLayout.OnSizeChangedListener {
+        Switcher.OnSwitchListener {
 
     private static final String TAG = "videocamera";
 
@@ -326,7 +327,6 @@ public class VideoCamera extends BaseCamera
 
         mPreviewFrameLayout = (PreviewFrameLayout)
                 findViewById(R.id.frame_layout);
-        mPreviewFrameLayout.setOnSizeChangedListener(this);
         resizeForPreviewAspectRatio();
 
         mVideoPreview = (SurfaceView) findViewById(R.id.camera_preview);
@@ -540,7 +540,6 @@ public class VideoCamera extends BaseCamera
     }
 
     private void onStopVideoRecording(boolean valid) {
-        mHeadUpDisplay.setVideoQualityControlsEnabled(true);
         if (mIsVideoCaptureIntent) {
             if (mQuickCapture) {
                 stopVideoRecordingAndReturn(valid);
@@ -814,6 +813,8 @@ public class VideoCamera extends BaseCamera
             return true;
         }
 
+        SharedPreferences prefs = getSharedPreferences("com.android.camera_preferences", 0);
+        boolean volZoom = prefs.getBoolean("vol_zoom_enabled", false);
         switch (keyCode) {
             case KeyEvent.KEYCODE_CAMERA:
                 if (event.getRepeatCount() == 0) {
@@ -833,6 +834,20 @@ public class VideoCamera extends BaseCamera
                     return true;
                 }
                 break;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (volZoom) {
+                    if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && mZoomValue < mZoomMax) {
+                        mZoomValue ++;
+                    }
+                    else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && mZoomValue > 0) {
+                        mZoomValue--;
+                    }
+                    onZoomValueChanged(mZoomValue);
+                    mHeadUpDisplay.setZoomIndex(mZoomValue);
+                    return true;
+                }
+                break;
         }
 
         return super.onKeyDown(keyCode, event);
@@ -840,10 +855,18 @@ public class VideoCamera extends BaseCamera
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        SharedPreferences prefs = getSharedPreferences("com.android.camera_preferences", 0);
+        boolean volZoom = prefs.getBoolean("vol_zoom_enabled", false);
         switch (keyCode) {
             case KeyEvent.KEYCODE_CAMERA:
                 mShutterButton.setPressed(false);
                 return true;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (volZoom || mMediaRecorderRecording) {
+                    return true;
+                }
+                break;
         }
         return super.onKeyUp(keyCode, event);
     }
@@ -1623,10 +1646,6 @@ public class VideoCamera extends BaseCamera
         } else {
             setCameraParameters();
         }
-    }
-
-    public void onSizeChanged() {
-        // TODO: update the content on GLRootView
     }
 
     private class MyHeadUpDisplayListener implements HeadUpDisplay.Listener {
