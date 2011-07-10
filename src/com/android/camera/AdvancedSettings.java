@@ -18,11 +18,13 @@
 package com.android.camera;
 
 import com.android.camera.R;
+
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.text.TextUtils;
 
 public class AdvancedSettings extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
 
@@ -43,6 +45,7 @@ public class AdvancedSettings extends PreferenceActivity implements Preference.O
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         addPreferencesFromResource(R.xml.camera_advanced_settings);
         final PreferenceScreen preferenceScreen = getPreferenceScreen();
         
@@ -130,6 +133,8 @@ public class AdvancedSettings extends PreferenceActivity implements Preference.O
     public boolean onPreferenceChange(Preference preference, Object value) {
         CheckBoxPreference checkBox = (CheckBoxPreference)preference;
         boolean checked = (Boolean)value;
+        System.out.println("value = " + value + ", pref.isChecked() - " + 
+            checkBox.isChecked());
 
         if (checkBox == volUpShutter || checkBox == volDownShutter) {
             boolean up = checkBox == volUpShutter;
@@ -151,6 +156,7 @@ public class AdvancedSettings extends PreferenceActivity implements Preference.O
         } else if (checkBox == preFocus) {
             longFocus.setEnabled(!checked);
         }
+
         return true;
     }
 }
