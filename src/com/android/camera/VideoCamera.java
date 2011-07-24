@@ -194,6 +194,10 @@ public class VideoCamera extends BaseCamera
     private int mOrientationCompensation = 0;
     private int mOrientationHint; // the orientation hint for video playback
 
+    // indicate if video zoom is supported for the current settings
+    // for general zoom support check mParameters.isZoomSupported()
+    private boolean mZoomSupported = false;
+
     // This Handler is used to post message back onto the main thread of the
     // application
     private class MainHandler extends Handler {
@@ -422,12 +426,12 @@ public class VideoCamera extends BaseCamera
             group = filterPreferenceScreenByIntent(group);
         }
 
-        boolean zoomSupported = CameraSettings.isVideoZoomSupported(this, mCameraId, mParameters);
+        mZoomSupported = CameraSettings.isVideoZoomSupported(this, mCameraId, mParameters);
         mHeadUpDisplay.initialize(this, group,
-                zoomSupported ? getZoomRatios() : null,
+                mZoomSupported ? getZoomRatios() : null,
                 mOrientationCompensation, mParameters);
 
-        if (zoomSupported) {
+        if (mZoomSupported) {
             mHeadUpDisplay.setZoomListener(new ZoomControllerListener() {
                 public void onZoomChanged(
                         int index, float ratio, boolean isMoving) {
@@ -813,8 +817,6 @@ public class VideoCamera extends BaseCamera
             return true;
         }
 
-        SharedPreferences prefs = getSharedPreferences("com.android.camera_preferences", 0);
-        boolean volZoom = prefs.getBoolean("vol_zoom_enabled", false);
         switch (keyCode) {
             case KeyEvent.KEYCODE_CAMERA:
                 if (event.getRepeatCount() == 0) {
@@ -836,15 +838,19 @@ public class VideoCamera extends BaseCamera
                 break;
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                if (volZoom) {
-                    if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && mZoomValue < mZoomMax) {
-                        mZoomValue ++;
+                if (prefs.getBoolean("vol_zoom_enabled", false)) {
+                    if (mZoomSupported) {
+                        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && mZoomValue < mZoomMax) {
+                            mZoomValue++;
+                            onZoomValueChanged(mZoomValue);
+                            mHeadUpDisplay.setZoomIndex(mZoomValue);
+                        }
+                        else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && mZoomValue > 0) {
+                            mZoomValue--;
+                            onZoomValueChanged(mZoomValue);
+                            mHeadUpDisplay.setZoomIndex(mZoomValue);
+                        }
                     }
-                    else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && mZoomValue > 0) {
-                        mZoomValue--;
-                    }
-                    onZoomValueChanged(mZoomValue);
-                    mHeadUpDisplay.setZoomIndex(mZoomValue);
                     return true;
                 }
                 break;
@@ -855,15 +861,13 @@ public class VideoCamera extends BaseCamera
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        SharedPreferences prefs = getSharedPreferences("com.android.camera_preferences", 0);
-        boolean volZoom = prefs.getBoolean("vol_zoom_enabled", false);
         switch (keyCode) {
             case KeyEvent.KEYCODE_CAMERA:
                 mShutterButton.setPressed(false);
                 return true;
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                if (volZoom || mMediaRecorderRecording) {
+                if (prefs.getBoolean("vol_zoom_enabled", false) || mMediaRecorderRecording) {
                     return true;
                 }
                 break;
