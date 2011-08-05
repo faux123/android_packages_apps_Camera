@@ -182,6 +182,8 @@ public class VideoCamera extends BaseCamera
 
     private final Handler mHandler = new MainHandler();
 
+    private SharedPreferences prefs;
+
     // multiple cameras support
     private int mNumberOfCameras;
     private int mCameraId;
@@ -327,6 +329,7 @@ public class VideoCamera extends BaseCamera
         mContentResolver = getContentResolver();
 
         requestWindowFeature(Window.FEATURE_PROGRESS);
+        prefs = getSharedPreferences("com.android.camera_preferences", 0);
         setContentView(R.layout.video_camera);
 
         mPreviewFrameLayout = (PreviewFrameLayout)
