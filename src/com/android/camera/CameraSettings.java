@@ -94,8 +94,10 @@ public class CameraSettings {
     // Nvidia 1080p high framerate
     private static boolean mSupportsNvHFR;
 
-    // Samsung camcorder mode
-    private static boolean mSamsungCamMode;
+    // Samsung camera unadvertised modes
+    private static boolean mSamsungCamMode; // camcorder mode
+    private static boolean mSamsungContinuousAf;
+    private static boolean mSamsungSpecialSettings; // slow_ae and video_recording_gamma
 
     public static final String FOCUS_MODE_TOUCH = "touch";
 
@@ -271,10 +273,14 @@ public class CameraSettings {
     }
 
     private boolean checkTouchFocus() {
-        if (mParameters.get("taking-picture-zoom") != null) {
+        if (mParameters.get("taking-picture-zoom") != null ||
+            mParameters.get("touch-focus") != null) {
             /* HTC camera, which always have touch-to-focus support. Unfortunately
              * the touch-to-focus parameter 'touch-focus' is not present at initialization
              * time, which is why we need to resort to another HTC specific parameter
+             *
+             * The 'touch-focus' parameter is checked anyway so that libcamera.so wrappers
+             * may implement the HTC's inteface without implenting its quirk.
              */
             sTouchFocusParameter = "touch-focus";
             sTouchFocusNeedsRect = false;
@@ -362,6 +368,8 @@ public class CameraSettings {
 
         mSupportsNvHFR = mContext.getResources().getBoolean(R.bool.supportsNvHighBitrateFullHD);
         mSamsungCamMode = mContext.getResources().getBoolean(R.bool.needsSamsungCamMode);
+        mSamsungContinuousAf = mContext.getResources().getBoolean(R.bool.needsSamsungContinuousAf);
+        mSamsungSpecialSettings = mContext.getResources().getBoolean(R.bool.needsSamsungSpecialSettings);
     }
 
     private static boolean removePreference(PreferenceGroup group, String key) {
@@ -562,6 +570,22 @@ public class CameraSettings {
         } else if (mSamsungCamMode) {
             params.set("cam_mode", on ? "1" : "0");
         }
+
+        if (on && params.get("focus-mode-values").indexOf("continuous-video") != -1) {
+            // Galaxy S2
+            params.set("focus-mode", "continuous-video");
+        }
+
+        if (mSamsungSpecialSettings) {
+            params.set("video_recording_gamma", on ? "on" : "off");
+            params.set("slow_ae", on ? "on" : "off");
+            params.set("iso", on ? "movie" : "auto");
+            params.set("metering", on ? "matrix" : "center");
+
+            if (on) {
+                params.set("antibanding", "50hz");
+            }
+        }
     }
 
     /**
@@ -573,6 +597,8 @@ public class CameraSettings {
     public static void setContinuousAf(Parameters params, boolean on) {
         if (params.get("enable-caf") != null) {
             params.set("enable-caf", on ? "on" : "off");
+        } else if (mSamsungContinuousAf) {
+            params.set("continuous_af", on ? 1 : 0);
         }
     }
 
