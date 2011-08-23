@@ -21,6 +21,7 @@ import com.android.camera.ui.HeadUpDisplay;
 
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.content.SharedPreferences;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.util.Log;

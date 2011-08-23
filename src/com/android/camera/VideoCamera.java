@@ -182,8 +182,6 @@ public class VideoCamera extends BaseCamera
 
     private final Handler mHandler = new MainHandler();
 
-    private SharedPreferences prefs;
-
     // multiple cameras support
     private int mNumberOfCameras;
     private int mCameraId;
@@ -195,6 +193,7 @@ public class VideoCamera extends BaseCamera
     // counter-clockwise
     private int mOrientationCompensation = 0;
     private int mOrientationHint; // the orientation hint for video playback
+    private SharedPreferences prefs;
 
     // indicate if video zoom is supported for the current settings
     // for general zoom support check mParameters.isZoomSupported()

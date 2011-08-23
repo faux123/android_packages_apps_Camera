@@ -24,7 +24,6 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
-import android.text.TextUtils;
 
 public class AdvancedSettings extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
 
@@ -133,8 +132,6 @@ public class AdvancedSettings extends PreferenceActivity implements Preference.O
     public boolean onPreferenceChange(Preference preference, Object value) {
         CheckBoxPreference checkBox = (CheckBoxPreference)preference;
         boolean checked = (Boolean)value;
-        System.out.println("value = " + value + ", pref.isChecked() - " + 
-            checkBox.isChecked());
 
         if (checkBox == volUpShutter || checkBox == volDownShutter) {
             boolean up = checkBox == volUpShutter;
